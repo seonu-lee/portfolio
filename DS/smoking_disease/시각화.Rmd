@@ -1,0 +1,261 @@
+---
+title: "팀플 가설 그래프"
+author: "seonu"
+date: "2023-12-03"
+output: word_document
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+smoke <- read.csv("smoke.csv", header = TRUE)
+smoke
+
+# BMI, blood_pressure, fitness_level 범주형으로 합치기
+# 자료 수 50000, 36열
+edit_smoke <-  smoke %>%
+  mutate(BMI = ifelse(bmi_category_Normal.Weight, "Normal Weight",
+            ifelse(bmi_category_Obese, "Obese",
+            ifelse(bmi_category_Overweight, "Overweight",
+            ifelse(bmi_category_Underweight, "Underweight", NA_character_)))))%>%
+  mutate(blood_pressure= ifelse(blood_pressure_category_Elevated, "Elevated",
+            ifelse(blood_pressure_category_Hypertension.Stage.1, "Hypertension.Stage.1",
+            ifelse(blood_pressure_category_Hypertension.Stage.2, "Hypertension.Stage.2",
+            ifelse(blood_pressure_category_Normal, "Normal", NA_character_)))))%>%
+  mutate(fitness_level= ifelse(fitness_level_Fit, "Fit",
+            ifelse(fitness_level_Not.Fit, "Not.Fit", NA_character_)))%>%
+  select(-bmi_category_Normal.Weight, 
+         -bmi_category_Obese, 
+         -bmi_category_Overweight,
+         -bmi_category_Underweight,
+         -blood_pressure_category_Elevated,
+         -blood_pressure_category_Hypertension.Stage.1,
+         -blood_pressure_category_Hypertension.Stage.2,
+         -blood_pressure_category_Normal,
+         -fitness_level_Fit,
+         -fitness_level_Not.Fit)
+
+edit_smoke
+```
+
+
+가설1. 흡연은 공복혈당 수준에 영향을 줄 수 있다.
+```{r}
+#fasting.blood.sugar 126 이상의 범위에 흡연자 수 비교 
+
+edit_smoke %>%
+  filter(fasting.blood.sugar > 126) %>% count(fasting.blood.sugar, smoking)
+
+edit_smoke %>%
+  filter(fasting.blood.sugar > 126) %>% count(fasting.blood.sugar, smoking) %>%
+ ggplot() +
+  geom_histogram(aes(fasting.blood.sugar, fill = factor(smoking)), position = "dodge") 
+
+edit_smoke %>%
+  filter(fasting.blood.sugar > 126) %>% count(fasting.blood.sugar, smoking) %>%
+ ggplot() +
+  geom_density(aes(fasting.blood.sugar, fill = factor(smoking)),alpha=0.3)
+
+edit_smoke %>%
+  filter(fasting.blood.sugar > 126) %>% count(fasting.blood.sugar, smoking) %>%
+ ggplot() +
+  geom_freqpoly(aes(fasting.blood.sugar,after_stat(density), color = factor(smoking)))
+
+#-> 126 이상의 범위에 흡연자가 비흡연자 보다 많기 때문에 흡연은 당뇨병의 발생을 증가시킨다.(x, 차이 없음)
+
+```
+
+가설2. 흡연은 콜레스트롤의 수준에 영향을 줄 것이다.
+```{r}
+#Cholesterol 200 이상의 범위에 흡연자 수 비교 
+edit_smoke %>%
+  filter(Cholesterol > 200) %>% count(Cholesterol, smoking)
+
+edit_smoke %>%
+  filter(Cholesterol > 200) %>% count(Cholesterol, smoking) %>%
+ ggplot() +
+  geom_histogram(aes(Cholesterol, fill = factor(smoking)), position = "dodge") 
+
+edit_smoke %>%
+  filter(Cholesterol > 200) %>% count(Cholesterol, smoking) %>%
+ ggplot() +
+  geom_density(aes(Cholesterol, fill = factor(smoking)),alpha=0.3)
+
+edit_smoke %>%
+  filter(Cholesterol > 200) %>% count(Cholesterol, smoking) %>%
+ ggplot() +
+  geom_freqpoly(aes(Cholesterol,after_stat(density), color = factor(smoking)))
+
+#-> 200 이상의 범위에 흡연자가 비흡연자 보다 많기 때문에 흡연은 콜레스테롤을 증가시킨다. (o)
+
+
+```
+
+가설3. 흡연 유무와 중성지방 수준 간에는 상관 관계가 있을 것이다.
+```{r}
+cor(edit_smoke$smoking,edit_smoke$triglyceride)
+
+#->약한 양의 상관관계를 가진다.
+
+```
+
+가설4. 흡연 여부가 HDL수치의 감소에 영향을 미칠 것이다.
+```{r}
+#HDL 60이하, 90이상의 범위에 흡연자 수 비교
+
+edit_smoke %>%
+  filter(HDL > 90, HDL<60) %>% count(HDL, smoking)
+
+#->해당 자료 없음 
+```
+
+가설5. 흡연 여부가 LDL수치의 증가에 영향을 미칠 것이다.
+```{r}
+#LDL 100 이상의 범위에 흡연자 수 비교 
+edit_smoke %>%
+  filter(LDL > 100) %>% count(LDL, smoking)
+
+edit_smoke %>%
+  filter(LDL > 100) %>% count(LDL, smoking) %>%
+ ggplot() +
+  geom_histogram(aes(LDL, fill = factor(smoking)), position = "dodge") 
+
+edit_smoke %>%
+  filter(LDL > 100) %>% count(LDL, smoking) %>%
+ ggplot() +
+  geom_freqpoly(aes(LDL, color = factor(smoking)))
+
+edit_smoke %>%
+  filter(LDL > 100) %>% count(LDL, smoking) %>%
+ ggplot() +
+  geom_density(aes(LDL, fill = factor(smoking)),alpha=0.3)
+
+edit_smoke %>%
+  filter(LDL > 100) %>% count(LDL, smoking) %>%
+ ggplot() +
+  geom_freqpoly(aes(LDL,after_stat(density), color = factor(smoking)))
+
+#-> 100 이상의 범위에 흡연자가 비흡연자 보다 많기 때문에 흡연은 LDL수치의 증가에 영향을 미칠 것이다. (x)
+```
+
+가설6. 흡연은 소변단백질 수치를 증가시킨다
+```{r}
+#Urine.protein 흡연자 수 비교 
+edit_smoke %>% count(Urine.protein)
+
+edit_smoke %>%
+   count(Urine.protein, smoking)
+
+edit_smoke %>%
+ ggplot() +
+  geom_count(aes(factor(smoking) ,Urine.protein)) 
+
+edit_smoke %>%
+   count(Urine.protein, smoking) %>%
+ ggplot() +
+  geom_bar(aes(Urine.protein,n, fill = factor(smoking)),stat="identity",position="dodge")+scale_x_continuous(breaks=c(1,2,3,4,5,6))
+
+edit_smoke %>%
+   count(Urine.protein, smoking) %>%
+ ggplot() +
+  geom_tile(aes(factor(smoking),Urine.protein, fill = n))
+
+#-> 흡연은 소변단백질 수치를 증가시킨다(x)
+
+```
+
+가설7. 흡연은 혈청 크레아티닌 수치를 정상 범주에서 벗어나게 한다. (x)
+```{r}
+#serum.creatinine 1.4 이상, 0.7이하 범위에 흡연자 수 비교 
+edit_smoke %>%
+  filter(serum.creatinine > 1.4, serum.creatinine<0.7) %>% count(serum.creatinine, smoking)
+
+#->해당 자료 없음 
+
+```
+
+가설8. (평균 모두 정상 범위 내에 속함.) 흡연은 간질환 발병 위험을 증가시킨다.
+```{r}
+#AST가 40보다 높은 범위의 흡연자와 비흡연자의 수 비교
+edit_smoke %>% filter(AST > 40) %>% count(AST, smoking)
+
+edit_smoke %>% filter(AST > 40) %>% count(AST, smoking) %>%
+  ggplot() + geom_histogram(aes(AST, fill = factor(smoking)), position = "dodge")
+
+edit_smoke %>% filter(AST > 40) %>% count(AST, smoking) %>% 
+  ggplot() + geom_freqpoly(aes(AST, color = factor(smoking)))
+                      
+edit_smoke %>% filter(AST > 40) %>% count(AST, smoking) %>% 
+  ggplot() + geom_density(aes(AST, fill = factor(smoking)), alpha=0.5)
+
+edit_smoke %>% filter(AST>40) %>% group_by(smoking) %>% summarise(AST_mean= mean(AST, na.rm= TRUE),count=n())
+
+edit_smoke %>% filter(AST>40) %>% group_by(smoking) %>% summarise(AST_mean= mean(AST, na.rm= TRUE)) %>% ggplot() + geom_bar(aes(smoking,AST_mean),stat="identity") +
+scale_x_continuous(breaks=c(0,1))
+
+#->정상이 아닌 범위에서는 흡연자 평균이 조금 더 높음 그렇다고 흡연이 AST를 증가시킨다.(x)
+
+```
+
+가설9. (평균 모두 정상 범위 내에 속함)
+흡연은 간수치를 증가시킨다.
+```{r}
+#ALT가 40보다 높은 범위의 흡연자와 비흡연자의 수 비교
+edit_smoke %>% filter(ALT > 40) %>% count(ALT, smoking)
+
+edit_smoke %>% filter(ALT > 40) %>% count(ALT, smoking) %>%
+  ggplot() + geom_histogram(aes(ALT, fill = factor(smoking)), position = "dodge")
+
+edit_smoke %>% filter(ALT > 40) %>% count(ALT, smoking) %>% 
+  ggplot() + geom_freqpoly(aes(ALT, color = factor(smoking)))
+                      
+edit_smoke %>% filter(ALT > 40) %>% count(ALT, smoking) %>% 
+  ggplot() + geom_density(aes(ALT, fill = factor(smoking)), alpha=0.5)
+
+edit_smoke %>% filter(ALT>40) %>% group_by(smoking) %>% summarise(ALT_mean= mean(ALT, na.rm= TRUE),count=n())
+
+edit_smoke %>% filter(ALT>40) %>% group_by(smoking) %>% summarise(ALT_mean= mean(ALT, na.rm= TRUE)) %>% ggplot() + geom_bar(aes(smoking,ALT_mean),stat="identity") +
+scale_x_continuous(breaks=c(0,1))
+
+#->정상이 아닌 범위에서는 흡연자 평균이 굉장히 조금 더 높음 흡연이 ALT를 증가시킨다.(x)
+```
+
+
+가설10. (평균 모두 정상 범위 내에 속함) 흡연은 가수분해효소 수치를 증가시킨다.
+```{r}
+#Gtp가 50보다 높은 범위의 흡연자와 비흡연자의 수 비교
+edit_smoke %>% filter(Gtp > 50) %>% count(Gtp, smoking)
+
+edit_smoke %>% filter(Gtp > 50) %>% count(Gtp, smoking) %>%
+  ggplot() + geom_histogram(aes(Gtp, fill = factor(smoking)), position = "dodge")
+
+edit_smoke %>% filter(Gtp > 50) %>% count(Gtp, smoking) %>% 
+  ggplot() + geom_freqpoly(aes(Gtp, color = factor(smoking)))
+                      
+edit_smoke %>% filter(Gtp > 50) %>% count(Gtp, smoking) %>% 
+  ggplot() + geom_density(aes(Gtp, fill = factor(smoking)), alpha=0.5)
+
+edit_smoke %>% filter(ALT>40) %>% group_by(smoking) %>% summarise(Gtp_mean= mean(Gtp, na.rm= TRUE),count=n())
+
+edit_smoke %>% filter(ALT>40) %>% group_by(smoking) %>% summarise(Gtp_mean= mean(Gtp, na.rm= TRUE)) %>% ggplot() + geom_bar(aes(smoking,Gtp_mean),stat="identity") +
+scale_x_continuous(breaks=c(0,1))
+
+#->정상이 아닌 범위에서는 흡연자 평균이 더 높음 ,그래프로 봤을 때 Gtp가 높아질수록 흡연자의 비율이 현저하게 더 많음을 볼 수 있음, 흡연이 Gtp를 증가시킨다(o) 정확히 말하면 Gtp가 정상이 아닌, 수치가 높은 사람들 중에서는 흡연자의 비율이 더 많다.  
+```
+
+가설11. 흡연은 충치 발생에 영향을 미친다.
+```{r}
+#dental.caries 흡연자와 비흡연자의 충치 비율 비교
+edit_smoke %>% count(dental.caries)
+
+edit_smoke %>% group_by(smoking) %>% summarise(dental.caries_mean= mean(dental.caries, na.rm= TRUE)) 
+
+edit_smoke %>% group_by(smoking) %>% summarise(dental.caries_mean= mean(dental.caries, na.rm= TRUE)) %>% ggplot()+ geom_bar(aes(factor(smoking), dental.caries_mean),stat="identity")
+
+edit_smoke %>% group_by(smoking) %>% ggplot() + geom_bar(aes(dental.caries,fill=factor(smoking)),position="dodge")+ scale_x_continuous(breaks=c(0,1))
+
+#->-> 흡연자의 충치 비율이 더 높다.(o)
+```
+
+
