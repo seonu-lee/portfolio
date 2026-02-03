@@ -22,10 +22,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-# 한글 폰트 설정
-plt.rcParams['font.family'] = 'Malgun Gothic'
-plt.rcParams['axes.unicode_minus'] = False
+# 시각화 스타일 설정
+import matplotlib.pyplot as plt
+import seaborn as sns
 sns.set_theme(style="whitegrid")
+plt.rcParams['font.family'] = 'Malgun Gothic' # Windows 한글 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False # 마이너스 기호 깨짐 방지
 
 # ====================================
 # 1. 데이터 로딩 (기존과 동일)

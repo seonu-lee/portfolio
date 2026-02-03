@@ -10,6 +10,13 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 
+# 시각화 스타일 설정
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_theme(style="whitegrid")
+plt.rcParams['font.family'] = 'Malgun Gothic' # Windows 한글 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False # 마이너스 기호 깨짐 방지
+
 print("Quick Test 시작...\n")
 
 # ========== 1. 데이터 준비 ==========
